@@ -1,0 +1,46 @@
+name: ResearchBase
+
+on:
+  push:
+    branches: ["main", "rebuild"]
+  pull_request:
+    branches: ["main", "rebuild"]
+
+jobs:
+  build-and-test:
+    name: Build and test ResearchBase
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project ResearchBase.xcodeproj \
+            -scheme ResearchBase \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            build
+
+      - name: Test
+        run: |
+          xcodebuild \
+            -project ResearchBase.xcodeproj \
+            -scheme ResearchBase \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGN_IDENTITY="-" \
+            test
+
+      - name: Keep test results if something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult
